@@ -3,6 +3,7 @@
 Env: GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, CHANNELS_JSON = [{"name":"..","refresh_token":".."}], SLOT (0,1,2)"""
 import os, json, sys, hashlib, subprocess, urllib.request, urllib.parse, urllib.error
 HERE = os.path.dirname(os.path.abspath(__file__))
+os.makedirs(os.path.join(HERE, "out"), exist_ok=True)
 sys.path.insert(0, HERE)
 import make_short
 

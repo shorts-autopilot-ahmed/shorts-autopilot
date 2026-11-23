@@ -14,6 +14,7 @@ eq(await unseal(env, await seal(env, "tok")), "tok", "encrypt roundtrip");
 const nowH = new Date().getUTCHours(), past = String((nowH + 23) % 24).padStart(2, "0") + ":00", fut = String((nowH + 5) % 24).padStart(2, "0") + ":00";
 const mk = async (id, times, extra = {}) => store.set("ch:" + id, JSON.stringify({ id, owner: "42", label: id, niche: "stoic", tz: "UTC", times, active: true, status: "ok", rt: await seal(env, "RT" + id), connected: new Date().toISOString(), last_done: [], posted: 0, ...extra }));
 store.set("o:42", JSON.stringify({ email: "a@b.c", channels: ["a", "b", "c"] }));
+eq((await call("/auth/login?mode=add&target=" + encodeURIComponent("https://www.youtube.com/@My.Channel/videos"))).headers.get("set-cookie").includes("my.channel"), true, "target @handle parsed into state");
 await mk("a", [past]); await mk("b", [fut]); await mk("c", [past], { status: "reconnect_required" });
 let d = await (await call("/api/due", H)).json(); eq(d.length, nowH === 0 ? d.length : 1, "only channel a due (custom time, b future, c paused)"); eq(d[0].refresh_token, "RTa", "token unsealed");
 eq(d[0].seq, 0, "seq 0");

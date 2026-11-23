@@ -12,7 +12,7 @@ jobs:
         env: { SITE_URL: "${{ secrets.SITE_URL }}", RUNNER_TOKEN: "${{ secrets.RUNNER_TOKEN }}" }
         run: |
           curl -fsS -A shorts-runner/1.0 -H "Authorization: Bearer $RUNNER_TOKEN" "$SITE_URL/api/due" -o /tmp/due.json
-          python3 -c "import json;n=len(json.load(open("/tmp/due.json")));print('due:',n);open('/tmp/n','w').write(str(n))"
+          python3 -c "import json;n=len(json.load(open('/tmp/due.json')));print('due:',n);open('/tmp/n','w').write(str(n))"
           echo "DUE=$(cat /tmp/n)" >> $GITHUB_ENV
       - if: env.DUE != '0'
         uses: actions/checkout@v4

@@ -7,7 +7,7 @@ sys.path.insert(0, HERE)
 import make_short
 
 def post(url, data=None, headers=None, raw=None):
-    req = urllib.request.Request(url, data=raw if raw is not None else urllib.parse.urlencode(data).encode(), headers=headers or {})
+    req = urllib.request.Request(url, data=raw if raw is not None else urllib.parse.urlencode(data).encode(), headers={"User-Agent": "shorts-runner/1.0", **(headers or {})})
     return urllib.request.urlopen(req, timeout=300)
 
 def access_token(rt):
@@ -27,7 +27,7 @@ def upload(tok, path, meta):
 
 if __name__ == "__main__":
     slot = int(os.environ.get("SLOT", "0"))
-    site = os.environ.get("SITE_URL"); H = {"Authorization": "Bearer " + os.environ.get("RUNNER_TOKEN", "")}
+    site = os.environ.get("SITE_URL"); H = {"Authorization": "Bearer " + os.environ.get("RUNNER_TOKEN", ""), "User-Agent": "shorts-runner/1.0"}
     if site:  # website mode: channels come from the Worker's KV
         channels = [dict(c, name=c["id"]) for c in json.load(urllib.request.urlopen(urllib.request.Request(f"{site}/api/due?slot={slot}", headers=H)))]
     else:

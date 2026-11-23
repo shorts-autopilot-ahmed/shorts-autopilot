@@ -1,0 +1,86 @@
+{
+ "id": "stoic",
+ "name": "Stoic Wisdom",
+ "rtl": false,
+ "font": "Amiri-Regular.ttf",
+ "size": 84,
+ "palettes": [
+  [
+   "0x1a1a2e",
+   "0x16537e"
+  ],
+  [
+   "0x232526",
+   "0x414345"
+  ],
+  [
+   "0x141e30",
+   "0x243b55"
+  ]
+ ],
+ "title": "Stoic thought: {tag}",
+ "desc": "{text}\n\n{hashtags}",
+ "hashtags": "#stoicism #wisdom #mindset",
+ "items": [
+  {
+   "text": "You cannot control what happens. You can control how you answer it.",
+   "sub": "Stoic wisdom",
+   "tag": "Control"
+  },
+  {
+   "text": "The obstacle is not in your way. The obstacle is the way.",
+   "sub": "Stoic wisdom",
+   "tag": "Obstacles"
+  },
+  {
+   "text": "Judge less. Understand more. Most pain comes from the story we add.",
+   "sub": "Stoic wisdom",
+   "tag": "Judgment"
+  },
+  {
+   "text": "Do today what a calm mind would be proud of tomorrow.",
+   "sub": "Stoic wisdom",
+   "tag": "Action"
+  },
+  {
+   "text": "Wealth is wanting little. Peace is needing less.",
+   "sub": "Stoic wisdom",
+   "tag": "Enough"
+  },
+  {
+   "text": "Begin each morning by expecting difficulty, and meet it without surprise.",
+   "sub": "Stoic wisdom",
+   "tag": "Preparation"
+  },
+  {
+   "text": "Anger costs more than the thing that caused it.",
+   "sub": "Stoic wisdom",
+   "tag": "Anger"
+  },
+  {
+   "text": "You do not rise to your goals. You act from your habits.",
+   "sub": "Stoic wisdom",
+   "tag": "Habit"
+  },
+  {
+   "text": "Look at the tasks in front of you. Do the next right thing.",
+   "sub": "Stoic wisdom",
+   "tag": "Focus"
+  },
+  {
+   "text": "Be the same person in private as you are in public.",
+   "sub": "Stoic wisdom",
+   "tag": "Character"
+  },
+  {
+   "text": "Time is the one thing you cannot earn back. Spend it like it matters.",
+   "sub": "Stoic wisdom",
+   "tag": "Time"
+  },
+  {
+   "text": "Another person's opinion of you is their business, not yours.",
+   "sub": "Stoic wisdom",
+   "tag": "Freedom"
+  }
+ ]
+}

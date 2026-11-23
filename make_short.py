@@ -9,9 +9,10 @@ PALETTES = [("0x0b3d3a","0x1b2a6b"),("0x123b2e","0x0e2a4d"),("0x2a1b5c","0x0b3d4
 def load(niche):
     return json.load(open(f"{HERE}/niches/{niche}.json"))
 
-def pick(slot=0, day=None, niche="quran"):
-    n = load(niche); day = day or datetime.date.today()
-    a = dict(n["items"][(day.toordinal()*3 + slot) % len(n["items"])]); a["_n"] = n
+def pick(seq=0, niche="quran", salt=0):
+    """seq: how many posts this channel has had; salt: per-channel offset so channels differ."""
+    n = load(niche)
+    a = dict(n["items"][(salt + seq) % len(n["items"])]); a["_n"] = n
     return a
 
 def text_png(a, path):
@@ -64,7 +65,7 @@ def metadata(a):
     return {"title": n["title"].format(**f), "description": n["desc"].format(**f).strip()}
 
 if __name__ == "__main__":
-    slot = int(sys.argv[1]) if len(sys.argv)>1 else 0
+    seq = int(sys.argv[1]) if len(sys.argv)>1 else 0
     out = sys.argv[2] if len(sys.argv)>2 else f"{HERE}/out/short.mp4"
     niche = sys.argv[3] if len(sys.argv)>3 else "quran"
-    a = pick(slot, niche=niche); render(a, out, slot); print(json.dumps(metadata(a), ensure_ascii=False))
+    a = pick(seq, niche=niche); render(a, out, seq); print(json.dumps(metadata(a), ensure_ascii=False))

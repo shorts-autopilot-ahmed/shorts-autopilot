@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Daily runner: for each connected channel, render a Short and upload it public via YouTube Data API v3.
 Env: GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, CHANNELS_JSON = [{"name":"..","refresh_token":".."}], SLOT (0,1,2)"""
-import os, json, sys, subprocess, urllib.request, urllib.parse, urllib.error
+import os, json, sys, hashlib, subprocess, urllib.request, urllib.parse, urllib.error
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import make_short
@@ -26,10 +26,9 @@ def upload(tok, path, meta):
     return json.load(r)["id"]
 
 if __name__ == "__main__":
-    slot = int(os.environ.get("SLOT", "0"))
     site = os.environ.get("SITE_URL"); H = {"Authorization": "Bearer " + os.environ.get("RUNNER_TOKEN", ""), "User-Agent": "shorts-runner/1.0"}
     if site:  # website mode: channels come from the Worker's KV
-        channels = [dict(c, name=c["id"]) for c in json.load(urllib.request.urlopen(urllib.request.Request(f"{site}/api/due?slot={slot}", headers=H)))]
+        channels = [dict(c, name=c["id"]) for c in json.load(open(os.environ.get("DUE_FILE", "due.json")))]
     else:
         channels = json.loads(os.environ["CHANNELS_JSON"])
     def log(ch, **kw):
@@ -37,8 +36,8 @@ if __name__ == "__main__":
     failed = 0
     for ch in channels:   # each channel: {"name","refresh_token","niche"}
         try:
-            a = make_short.pick(slot, niche=ch.get("niche", "quran")); meta = make_short.metadata(a)
-            out = f"{HERE}/out/{ch['name']}.mp4"; make_short.render(a, out, slot)
+            salt = int(hashlib.sha1(ch["name"].encode()).hexdigest()[:6], 16); seq = int(ch.get("seq", 0)); a = make_short.pick(seq, niche=ch.get("niche", "quran"), salt=salt); meta = make_short.metadata(a)
+            out = f"{HERE}/out/{ch['name']}.mp4"; make_short.render(a, out, seq)
             try:
                 tok = access_token(ch["refresh_token"])
             except urllib.error.HTTPError as e:

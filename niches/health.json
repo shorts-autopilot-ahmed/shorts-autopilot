@@ -1,0 +1,86 @@
+{
+ "id": "health",
+ "name": "Healthy Habits",
+ "rtl": false,
+ "font": "Amiri-Regular.ttf",
+ "size": 84,
+ "palettes": [
+  [
+   "0x0f9b0f",
+   "0x000000"
+  ],
+  [
+   "0x134e5e",
+   "0x71b280"
+  ],
+  [
+   "0x1d4350",
+   "0xa43931"
+  ]
+ ],
+ "title": "Healthy habit: {tag}",
+ "desc": "{text}\n\n{hashtags}",
+ "hashtags": "#health #habits #wellness",
+ "items": [
+  {
+   "text": "Drink a glass of water as soon as you wake up.",
+   "sub": "Healthy habit",
+   "tag": "Water"
+  },
+  {
+   "text": "Ten minutes of walking after a meal is an easy win.",
+   "sub": "Healthy habit",
+   "tag": "Walk"
+  },
+  {
+   "text": "Keep a steady sleep schedule, even on weekends.",
+   "sub": "Healthy habit",
+   "tag": "Sleep"
+  },
+  {
+   "text": "Stand up and stretch for one minute every hour.",
+   "sub": "Healthy habit",
+   "tag": "Move"
+  },
+  {
+   "text": "Put your phone away 30 minutes before bed.",
+   "sub": "Healthy habit",
+   "tag": "Screens"
+  },
+  {
+   "text": "Add one vegetable to every meal.",
+   "sub": "Healthy habit",
+   "tag": "Food"
+  },
+  {
+   "text": "Take five slow breaths when you feel stressed.",
+   "sub": "Healthy habit",
+   "tag": "Breathe"
+  },
+  {
+   "text": "Get some daylight in the first hour after waking up.",
+   "sub": "Healthy habit",
+   "tag": "Light"
+  },
+  {
+   "text": "Eat slowly. Put the fork down between bites.",
+   "sub": "Healthy habit",
+   "tag": "Eating"
+  },
+  {
+   "text": "Small daily movement beats rare hard workouts.",
+   "sub": "Healthy habit",
+   "tag": "Consistency"
+  },
+  {
+   "text": "Prepare tomorrow's healthy snack tonight.",
+   "sub": "Healthy habit",
+   "tag": "Prep"
+  },
+  {
+   "text": "Be kind to yourself. Progress is not a straight line.",
+   "sub": "Healthy habit",
+   "tag": "Mindset"
+  }
+ ]
+}

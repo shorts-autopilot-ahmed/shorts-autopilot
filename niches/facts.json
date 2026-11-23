@@ -1,0 +1,86 @@
+{
+ "id": "facts",
+ "name": "Amazing Facts",
+ "rtl": false,
+ "font": "Amiri-Regular.ttf",
+ "size": 84,
+ "palettes": [
+  [
+   "0x0f2027",
+   "0x2c5364"
+  ],
+  [
+   "0x42275a",
+   "0x734b6d"
+  ],
+  [
+   "0x134e5e",
+   "0x71b280"
+  ]
+ ],
+ "title": "Did you know? {tag}",
+ "desc": "{text}\n\n{hashtags}",
+ "hashtags": "#facts #didyouknow #learn",
+ "items": [
+  {
+   "text": "Honey can last for thousands of years. Edible honey has been found in ancient Egyptian tombs.",
+   "sub": "Did you know?",
+   "tag": "Honey"
+  },
+  {
+   "text": "Octopuses have three hearts and blue blood.",
+   "sub": "Did you know?",
+   "tag": "Octopus"
+  },
+  {
+   "text": "A day on Venus is longer than a year on Venus.",
+   "sub": "Did you know?",
+   "tag": "Venus"
+  },
+  {
+   "text": "Botanically, bananas are berries. Strawberries are not.",
+   "sub": "Did you know?",
+   "tag": "Fruit"
+  },
+  {
+   "text": "Sharks existed before trees did.",
+   "sub": "Did you know?",
+   "tag": "Sharks"
+  },
+  {
+   "text": "Sunlight takes about 8 minutes to reach the Earth.",
+   "sub": "Did you know?",
+   "tag": "Sun"
+  },
+  {
+   "text": "Wombats produce cube-shaped droppings.",
+   "sub": "Did you know?",
+   "tag": "Wombat"
+  },
+  {
+   "text": "The Great Pyramid of Giza was the tallest man-made structure for around 3,800 years.",
+   "sub": "Did you know?",
+   "tag": "Pyramid"
+  },
+  {
+   "text": "Antarctica is the largest desert on Earth.",
+   "sub": "Did you know?",
+   "tag": "Desert"
+  },
+  {
+   "text": "Your brain uses about 20 percent of your body's energy.",
+   "sub": "Did you know?",
+   "tag": "Brain"
+  },
+  {
+   "text": "Sound cannot travel through the vacuum of space.",
+   "sub": "Did you know?",
+   "tag": "Space"
+  },
+  {
+   "text": "Bees can recognize human faces.",
+   "sub": "Did you know?",
+   "tag": "Bees"
+  }
+ ]
+}

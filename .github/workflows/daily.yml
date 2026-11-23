@@ -1,22 +1,29 @@
-name: Daily Quran Shorts
+name: Post due Shorts
 on:
-  schedule:            # UTC. Cairo is UTC+2 in winter: 14:00, 19:00, 23:00 Cairo
-    - cron: "0 12 * * *"
-    - cron: "0 17 * * *"
-    - cron: "0 21 * * *"
+  schedule:
+    - cron: "*/15 * * * *"   # checks every 15 min; only renders when a channel's own posting time is due
   workflow_dispatch:
+concurrency: { group: post, cancel-in-progress: false }
 jobs:
   post:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg && pip install pillow
-      - name: Render and upload
+      - name: Ask the site what is due
+        env: { SITE_URL: "${{ secrets.SITE_URL }}", RUNNER_TOKEN: "${{ secrets.RUNNER_TOKEN }}" }
+        run: |
+          curl -fsS -A shorts-runner/1.0 -H "Authorization: Bearer $RUNNER_TOKEN" "$SITE_URL/api/due" -o /tmp/due.json
+          python3 -c "import json;n=len(json.load(open("/tmp/due.json")));print('due:',n);open('/tmp/n','w').write(str(n))"
+          echo "DUE=$(cat /tmp/n)" >> $GITHUB_ENV
+      - if: env.DUE != '0'
+        uses: actions/checkout@v4
+      - if: env.DUE != '0'
+        run: pip install pillow && (ffmpeg -version | head -1)
+      - if: env.DUE != '0'
+        name: Render and upload
         env:
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
           SITE_URL: ${{ secrets.SITE_URL }}
           RUNNER_TOKEN: ${{ secrets.RUNNER_TOKEN }}
         run: |
-          H=$(date -u +%H); SLOT=0; [ "$H" -ge 16 ] && SLOT=1; [ "$H" -ge 20 ] && SLOT=2
-          SLOT=$SLOT python3 upload.py
+          DUE_FILE=/tmp/due.json python3 upload.py

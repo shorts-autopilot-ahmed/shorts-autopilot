@@ -17,7 +17,7 @@ jobs:
       - if: env.DUE != '0'
         uses: actions/checkout@v4
       - if: env.DUE != '0'
-        run: pip install pillow && (ffmpeg -version | head -1)
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg fonts-noto-core && pip install pillow
       - if: env.DUE != '0'
         name: Render and upload
         env:

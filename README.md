@@ -1,0 +1,6 @@
+# Daily Quran Shorts (free)
+Renders a ~25s vertical Short (Amiri ayah over animated gradient, synthesized ambient pad) and uploads it public to every connected channel, 3x/day, using GitHub Actions (free) + YouTube Data API (free quota).
+- `make_short.py` render + metadata, `ayat.json` verse list (rotates daily, different per slot), `upload.py` runner, `connect.py` one-time owner consent.
+- Setup: Google Cloud project, enable YouTube Data API v3, OAuth consent screen (Testing, add up to 100 test users), OAuth client; repo secrets GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, CHANNELS_JSON.
+- Website: worker/ (Cloudflare Worker + KV, free plan). `npx wrangler kv namespace create DB`, put the id in wrangler.toml, `wrangler secret put` GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, SESSION_KEY, RUNNER_TOKEN, `wrangler deploy`. Add the Worker URL + /auth/callback as the OAuth redirect URI. Repo secrets for the runner: SITE_URL, RUNNER_TOKEN, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET. Tests: `node worker/test.mjs`.
+- Limits (checked against Google docs 2026-11-24): videos.insert default quota is 100 uploads/day per Cloud project (about 33 channels at 3/day). Unverified projects are no longer forced to private (policy reversed Nov 16 2026). OAuth Testing mode: max 100 test users, and refresh tokens expire after 7 days (from Google OAuth docs, to be re-checked).

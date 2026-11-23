@@ -1,0 +1,46 @@
+{
+ "id": "motivation",
+ "name": "Daily Motivation",
+ "rtl": false,
+ "font": "Amiri-Regular.ttf",
+ "size": 84,
+ "palettes": [
+  [
+   "0x3a1c71",
+   "0xd76d77"
+  ],
+  [
+   "0x0f2027",
+   "0x2c5364"
+  ],
+  [
+   "0x42275a",
+   "0x734b6d"
+  ]
+ ],
+ "title": "Daily motivation: {tag}",
+ "desc": "{text}\n\n{hashtags}",
+ "hashtags": "#motivation #mindset",
+ "items": [
+  {
+   "text": "Small steps every day beat big plans someday.",
+   "sub": "",
+   "tag": "Consistency"
+  },
+  {
+   "text": "Start where you are. Use what you have.",
+   "sub": "",
+   "tag": "Start now"
+  },
+  {
+   "text": "Discipline is choosing what you want most over what you want now.",
+   "sub": "",
+   "tag": "Discipline"
+  },
+  {
+   "text": "You don't need to see the whole staircase. Just take the first step.",
+   "sub": "",
+   "tag": "First step"
+  }
+ ]
+}

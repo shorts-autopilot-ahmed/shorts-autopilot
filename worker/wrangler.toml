@@ -1,0 +1,6 @@
+name = "auto-shorts"
+main = "index.js"
+compatibility_date = "2026-11-01"
+[[kv_namespaces]]
+binding = "DB"
+id = "FILL_AFTER_wrangler_kv_namespace_create"

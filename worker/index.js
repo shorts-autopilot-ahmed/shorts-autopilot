@@ -20,7 +20,7 @@ async function sessionUser(env, req) {
   const m = (req.headers.get("cookie") || "").match(/sid=([^;]+)/); if (!m) return null;
   const [id, sig] = decodeURIComponent(m[1]).split("|"); return id && sig === (await hmac(env, id)) ? id : null;
 }
-const page = (body, status = 200, extra = {}) => new Response(`<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Auto Shorts</title><style>body{font-family:system-ui,sans-serif;margin:0;background:#f6f8fb;color:#1f2933;min-height:100vh;display:grid;place-items:center}main{max-width:560px;padding:28px;width:100%}.card{background:#fff;border:1px solid #e3e8ef;box-shadow:0 1px 3px #0001;border-radius:14px;padding:18px;margin:14px 0}input,select{border:1px solid #cbd5e1!important;background:#fff;color:#1f2933;border-radius:8px;padding:8px}.btn,button{background:#16a34a;color:#fff;border:0;padding:12px 22px;border-radius:10px;font-weight:700;text-decoration:none;display:inline-block;cursor:pointer}select,label{font-size:1rem}</style><main>${body}</main>`, { status, headers: { "content-type": "text/html;charset=utf-8", ...extra } });
+const page = (body, status = 200, extra = {}) => new Response(`<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>ShortsForge</title><style>body{font-family:system-ui,sans-serif;margin:0;background:#f6f8fb;color:#1f2933;min-height:100vh;display:grid;place-items:center}main{max-width:560px;padding:28px;width:100%}.card{background:#fff;border:1px solid #e3e8ef;box-shadow:0 1px 3px #0001;border-radius:14px;padding:18px;margin:14px 0}input,select{border:1px solid #cbd5e1!important;background:#fff;color:#1f2933;border-radius:8px;padding:8px}.btn,button{background:#16a34a;color:#fff;border:0;padding:12px 22px;border-radius:10px;font-weight:700;text-decoration:none;display:inline-block;cursor:pointer}select,label{font-size:1rem}</style><main>${body}</main>`, { status, headers: { "content-type": "text/html;charset=utf-8", ...extra } });
 
 const inner = {
   async fetch(req, env) {
@@ -179,14 +179,14 @@ export default {
     if (["/register", "/signin", "/api/account"].includes(u.pathname)) { const ar0 = await acct(req, env, u.pathname, sidOk); if (ar0) return ar0; }
     const open = ["/", "/signin", "/register", "/set", "/api/due", "/api/log"];
     if (!sidOk && !open.includes(u.pathname)) return new Response(null, { status: 302, headers: { location: "/" } });
-    if (!sidOk && u.pathname === "/" && req.method === "GET") { const r0 = page(`<h1>Auto Shorts</h1>${ACC_FORMS}`); html0 = await r0.text(); }
+    if (!sidOk && u.pathname === "/" && req.method === "GET") { const r0 = page(`<h1>ShortsForge</h1>${ACC_FORMS}`); html0 = await r0.text(); }
     if (sidOk && u.pathname === "/") return new Response(null, { status: 302, headers: { location: "/dashboard" } });
     const r = html0 !== null ? new Response(html0, { headers: { "content-type": "text/html;charset=utf-8" } }) : await inner.fetch(req, env);
     if (!(r.headers.get("content-type") || "").includes("text/html")) return r;
     const ar = /(?:^|;\s*)lang=ar/.test(ck), dark = /(?:^|;\s*)theme=dark/.test(ck);
     let html = await r.text();
     if (u.pathname === "/dashboard" && sidOk) { const oo = await get(env, "o:" + sidOk); html = html.replace("<form action=/auth/login class=card><input type=hidden name=mode value=add>", (oo && oo.username ? `<p style="color:#64748b">Username: <b>${esc(oo.username)}</b></p>` : "") + "<form action=/auth/login class=card><input type=hidden name=mode value=add>"); }
-    if (ar) { for (const [a, b] of AR) html = html.split(a).join(b); html = html.replace("<!doctype html>", "<!doctype html><html lang=ar dir=rtl>").replace("<title>Auto Shorts</title>", "<title>شورتس أوتوماتيك</title>"); }
+    if (ar) { for (const [a, b] of AR) html = html.split(a).join(b); html = html.replace("<!doctype html>", "<!doctype html><html lang=ar dir=rtl>").replace("<title>ShortsForge</title>", "<title>ShortsForge</title>"); }
     if (dark) html = html.replace("</style>", DARK + "</style>");
     const back = encodeURIComponent(u.pathname);
     const ic = "width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round", globe = `<svg viewBox="0 0 24 24" style="${ic}"><circle cx=12 cy=12 r=10 /><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></svg>`, moon = `<svg viewBox="0 0 24 24" style="${ic}"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>`, sun = `<svg viewBox="0 0 24 24" style="${ic}"><circle cx=12 cy=12 r=4 /><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>`, ib = "display:inline-flex;padding:8px;border-radius:999px;color:#64748b;text-decoration:none;margin:0 6px";

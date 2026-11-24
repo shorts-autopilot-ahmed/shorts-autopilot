@@ -102,6 +102,40 @@ const inner = {
   },
 };
 
+
+const pw = async (pass, salt) => b64(new Uint8Array(await crypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt: unb64(salt), iterations: 100000 }, await crypto.subtle.importKey("raw", enc.encode(pass), "PBKDF2", false, ["deriveBits"]), 256)));
+const okUser = (u) => /^[a-z0-9_.]{3,30}$/.test(u), okPass = (p) => p.length >= 8 && p.length <= 200;
+const sidCookie = async (env, owner) => `sid=${encodeURIComponent(owner + "|" + (await hmac(env, owner)))}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=34560000`;
+const newCred = async (pass) => { const salt = b64(crypto.getRandomValues(new Uint8Array(16))); return { salt, hash: await pw(pass, salt) }; };
+const eqs = (a, b) => { if (a.length !== b.length) return false; let d = 0; for (let i = 0; i < a.length; i++) d |= a.charCodeAt(i) ^ b.charCodeAt(i); return d === 0; };
+const ACC_FORMS = `<div class=card><h2 style="margin-top:0">Sign in with username</h2><form method=post action=/signin><p><input name=username placeholder="Username" required autocomplete=username style="width:100%"></p><p><input name=password type=password placeholder="Password" required autocomplete=current-password style="width:100%"></p><button>Sign in</button></form><hr style="border:0;border-top:1px solid #e3e8ef;margin:16px 0"><h2 style="margin-top:0">Create an account</h2><form method=post action=/register><p><input name=username placeholder="Choose a username (letters, numbers, . _)" required autocomplete=username style="width:100%"></p><p><input name=password type=password placeholder="Password (8 characters or more)" required minlength=8 autocomplete=new-password style="width:100%"></p><button>Create account</button></form></div><p style="text-align:center;color:#64748b">Or connect with Google below.</p>`;
+const ACC_SET = `<div class=card><b>Set a username and password</b><p style="color:#64748b">So you can sign in without Google next time.</p><form method=post action=/api/account><p><input name=username placeholder="Username" required style="width:100%"></p><p><input name=password type=password placeholder="Password (8 characters or more)" required minlength=8 style="width:100%"></p><button>Save</button></form></div>`;
+const bad = (m) => page(`<p>${m} <a class=btn href=/>Back</a></p>`, 400);
+async function acct(req, env, p, sess) {
+  if (req.method !== "POST") return null;
+  const f = await req.formData(), user = String(f.get("username") || "").trim().toLowerCase(), pass = String(f.get("password") || "");
+  if (p === "/api/account") {
+    if (!sess) return new Response(null, { status: 302, headers: { location: "/" } });
+    const o = await get(env, "o:" + sess); if (!o || o.username) return bad("Account already has a username.");
+    if (!okUser(user) || !okPass(pass)) return bad("Username must be 3 to 30 letters, numbers, dots or underscores, and the password at least 8 characters.");
+    if (await get(env, "a:" + user)) return bad("That username is taken.");
+    await put(env, "a:" + user, { owner: sess, ...(await newCred(pass)) }); o.username = user; await put(env, "o:" + sess, o);
+    return new Response(null, { status: 303, headers: { location: "/dashboard" } });
+  }
+  if (p === "/register") {
+    if (!okUser(user) || !okPass(pass)) return bad("Username must be 3 to 30 letters, numbers, dots or underscores, and the password at least 8 characters.");
+    if (await get(env, "a:" + user)) return bad("That username is taken.");
+    const owner = "u" + rid(); await put(env, "a:" + user, { owner, ...(await newCred(pass)) }); await put(env, "o:" + owner, { email: user, username: user, channels: [] });
+    return new Response(null, { status: 303, headers: { location: "/dashboard", "set-cookie": await sidCookie(env, owner) } });
+  }
+  if (p === "/signin") {
+    const a = okUser(user) ? await get(env, "a:" + user) : null, tk = "f:" + user, fl = (await get(env, tk)) || { n: 0, t: 0 };
+    if (fl.n >= 5 && Date.now() - fl.t < 900000) return bad("Too many wrong attempts. Wait 15 minutes.");
+    if (!a || !eqs(await pw(pass, a.salt), a.hash)) { if (okUser(user)) await put(env, tk, { n: (Date.now() - fl.t < 900000 ? fl.n : 0) + 1, t: Date.now() }); return bad("Wrong username or password."); }
+    return new Response(null, { status: 303, headers: { location: "/dashboard", "set-cookie": await sidCookie(env, a.owner) } });
+  }
+  return null;
+}
 const AR = [
 ["Daily Shorts on autopilot","شورتس يومية على الطيار الآلي"],
 ["Connect your YouTube channels. Pick a niche and your own posting times for each one. A fresh Short is made and posted for you automatically.","اربط قنوات يوتيوب بتاعتك. اختار المجال ومواعيد النشر لكل قناة. بنعمل شورت جديد وننشره لك أوتوماتيك."],
@@ -113,6 +147,7 @@ const AR = [
 ["Google did not grant upload access.","جوجل ما أعطتش صلاحية الرفع."],
 ["That Google account has no YouTube channel (or channel access was not granted).","حساب جوجل ده مالوش قناة يوتيوب (أو ما اتعطتش صلاحية القناة)."],
 ["You pasted","انت لصقت"],[", but the Google account you picked owns ","، لكن حساب جوجل اللي اخترته بيملك "],["Nothing was connected.","ما اتربطش أي شيء."],
+["Sign in with username","الدخول باسم المستخدم"],["Create an account","إنشاء حساب"],["Create account","إنشاء حساب"],["Sign in","دخول"],["Username (letters, numbers, . _)","اسم المستخدم"],["Choose a username (letters, numbers, . _)","اختر اسم مستخدم (حروف وأرقام . _)"],["Password (8 characters or more)","كلمة السر (٨ أحرف أو أكثر)"],["Username: ","اسم المستخدم: "],["Username","اسم المستخدم"],["Password","كلمة السر"],["Or connect with Google below.","أو اربط عن طريق جوجل بالأسفل."],["Set a username and password","حدد اسم مستخدم وكلمة سر"],["So you can sign in without Google next time.","عشان تدخل من غير جوجل المرة الجاية."],["Wrong username or password.","اسم المستخدم أو كلمة السر غلط."],["That username is taken.","اسم المستخدم ده مستخدم."],["Too many wrong attempts. Wait 15 minutes.","محاولات خاطئة كتير. استنى ١٥ دقيقة."],["Back","رجوع"],["Username must be 3 to 30 letters, numbers, dots or underscores, and the password at least 8 characters.","اسم المستخدم ٣ إلى ٣٠ حرف أو رقم أو . _ وكلمة السر ٨ أحرف على الأقل."],["Account already has a username.","الحساب ليه اسم مستخدم بالفعل."],
 ["Your channels","قنواتك"],["sign out","تسجيل خروج"],["No channels yet.","لا توجد قنوات بعد."],
 ["Add another channel: paste its link or @handle","أضف قناة تانية: الصق رابطها أو @اسمها"],["+ Add channel","+ إضافة قناة"],
 ["On the Google screen choose the account that owns that channel.","في شاشة جوجل اختار الحساب اللي بيملك القناة دي."],
@@ -140,11 +175,14 @@ export default {
       return new Response(null, { status: 302, headers: h });
     }
     const sidOk = await sessionUser(env, req);
+    if (["/register", "/signin", "/api/account"].includes(u.pathname)) { const ar0 = await acct(req, env, u.pathname, sidOk); if (ar0) return ar0; }
     if (sidOk && u.pathname === "/") return new Response(null, { status: 302, headers: { location: "/dashboard" } });
     const r = await inner.fetch(req, env);
     if (!(r.headers.get("content-type") || "").includes("text/html")) return r;
     const ar = /(?:^|;\s*)lang=ar/.test(ck), dark = /(?:^|;\s*)theme=dark/.test(ck);
     let html = await r.text();
+    if (u.pathname === "/" ) html = html.replace("<form action=/auth/login class=card>", ACC_FORMS + "<form action=/auth/login class=card>");
+    if (u.pathname === "/dashboard" && sidOk) { const oo = await get(env, "o:" + sidOk); html = html.replace("<form action=/auth/login class=card><input type=hidden name=mode value=add>", (oo && oo.username ? `<p style="color:#64748b">Username: <b>${esc(oo.username)}</b></p>` : ACC_SET) + "<form action=/auth/login class=card><input type=hidden name=mode value=add>"); }
     if (ar) { for (const [a, b] of AR) html = html.split(a).join(b); html = html.replace("<!doctype html>", "<!doctype html><html lang=ar dir=rtl>").replace("<title>Auto Shorts</title>", "<title>شورتس أوتوماتيك</title>"); }
     if (dark) html = html.replace("</style>", DARK + "</style>");
     const back = encodeURIComponent(u.pathname);

@@ -20,12 +20,12 @@ async function sessionUser(env, req) {
   const m = (req.headers.get("cookie") || "").match(/sid=([^;]+)/); if (!m) return null;
   const [id, sig] = decodeURIComponent(m[1]).split("|"); return id && sig === (await hmac(env, id)) ? id : null;
 }
-const page = (body, status = 200, extra = {}) => new Response(`<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Auto Shorts</title><style>body{font-family:system-ui,sans-serif;margin:0;background:linear-gradient(160deg,#0b3d3a,#1b2a6b);color:#fff8e1;min-height:100vh;display:grid;place-items:center}main{max-width:560px;padding:28px;width:100%}.card{background:#ffffff14;border-radius:14px;padding:18px;margin:14px 0}.btn,button{background:#d4af5a;color:#0b2a30;border:0;padding:12px 22px;border-radius:10px;font-weight:700;text-decoration:none;display:inline-block;cursor:pointer}select,label{font-size:1rem}</style><main>${body}</main>`, { status, headers: { "content-type": "text/html;charset=utf-8", ...extra } });
+const page = (body, status = 200, extra = {}) => new Response(`<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Auto Shorts</title><style>body{font-family:system-ui,sans-serif;margin:0;background:#f6f8fb;color:#1f2933;min-height:100vh;display:grid;place-items:center}main{max-width:560px;padding:28px;width:100%}.card{background:#fff;border:1px solid #e3e8ef;box-shadow:0 1px 3px #0001;border-radius:14px;padding:18px;margin:14px 0}input,select{border:1px solid #cbd5e1!important;background:#fff;color:#1f2933;border-radius:8px;padding:8px}.btn,button{background:#16a34a;color:#fff;border:0;padding:12px 22px;border-radius:10px;font-weight:700;text-decoration:none;display:inline-block;cursor:pointer}select,label{font-size:1rem}</style><main>${body}</main>`, { status, headers: { "content-type": "text/html;charset=utf-8", ...extra } });
 
-export default {
+const inner = {
   async fetch(req, env) {
     const url = new URL(req.url), p = url.pathname, redirect_uri = url.origin + "/auth/callback";
-    if (p === "/") return page(`<h1>Daily Shorts on autopilot</h1><p>Connect your YouTube channels. Pick a niche and your own posting times for each one. A fresh Short is made and posted for you automatically.</p><form action=/auth/login class=card><input type=hidden name=mode value=login><p><label>Your channel link or @handle<br><input name=target placeholder="https://youtube.com/@yourchannel" style="width:100%;padding:10px;border-radius:8px;border:0;margin-top:6px"></label></p><button>Connect YouTube channel</button><p style="opacity:.7;font-size:.9rem">We check that the Google account you pick really owns that channel.</p></form><p style="opacity:.7">Permission asked: upload videos only. You can revoke it any time in your Google account.</p>`);
+    if (p === "/") return page(`<h1>Daily Shorts on autopilot</h1><p>Connect your YouTube channels. Pick a niche and your own posting times for each one. A fresh Short is made and posted for you automatically.</p><form action=/auth/login class=card><input type=hidden name=mode value=login><p><label>Your channel link or @handle<br><input name=target placeholder="https://youtube.com/@yourchannel" style="width:100%;padding:10px;border-radius:8px;border:0;margin-top:6px"></label></p><button>Connect YouTube channel</button><p style="color:#64748b;font-size:.9rem">We check that the Google account you pick really owns that channel.</p></form><p style="color:#64748b">Permission asked: upload videos only. You can revoke it any time in your Google account.</p>`);
     if (p === "/auth/login") {
       const state = crypto.randomUUID(), mode = url.searchParams.get("mode") || "login", ch = url.searchParams.get("ch") || "", target = parseTarget(url.searchParams.get("target"));
       return new Response(null, { status: 302, headers: { location: "https://accounts.google.com/o/oauth2/v2/auth?" + new URLSearchParams({ client_id: env.GOOGLE_CLIENT_ID, redirect_uri, response_type: "code", scope: "openid email https://www.googleapis.com/auth/youtube.upload https://www.googleapis.com/auth/youtube.readonly", access_type: "offline", prompt: "consent select_account", state }), "set-cookie": `st=${state}|${mode}|${ch.replace(/[^a-z0-9]/g, "")}|${encodeURIComponent(target)}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=600` } });
@@ -74,11 +74,11 @@ export default {
       for (const id of o.channels) {
         const c = await get(env, "ch:" + id); if (!c) continue;
         const log = (await get(env, "log:" + id)) || [], expires = new Date(new Date(c.connected).getTime() + 7 * 864e5), daysLeft = Math.ceil((expires - Date.now()) / 864e5);
-        const banner = c.status === "reconnect_required" ? `<div class=card style="background:#b3402a55"><b>Reconnect required.</b> Google ended the permission, so posting is paused (nothing fails silently). <a class=btn href="/auth/login?mode=reconnect&ch=${id}">Reconnect channel</a></div>` : daysLeft <= 2 ? `<div class=card style="background:#d4af5a44">Pilot mode: Google ends this permission about ${esc(expires.toISOString().slice(0, 10))}. <a style=color:#d4af5a href="/auth/login?mode=reconnect&ch=${id}">Reconnect now</a> to keep posting.</div>` : `<p style="opacity:.7">Connected ${esc(c.connected.slice(0, 10))}. Pilot mode: reconnect by ${esc(expires.toISOString().slice(0, 10))}.</p>`;
+        const banner = c.status === "reconnect_required" ? `<div class=card style="background:#fee2e2"><b>Reconnect required.</b> Google ended the permission, so posting is paused (nothing fails silently). <a class=btn href="/auth/login?mode=reconnect&ch=${id}">Reconnect channel</a></div>` : daysLeft <= 2 ? `<div class=card style="background:#fef3c7">Pilot mode: Google ends this permission about ${esc(expires.toISOString().slice(0, 10))}. <a style=color:#15803d href="/auth/login?mode=reconnect&ch=${id}">Reconnect now</a> to keep posting.</div>` : `<p style="color:#64748b">Connected ${esc(c.connected.slice(0, 10))}. Pilot mode: reconnect by ${esc(expires.toISOString().slice(0, 10))}.</p>`;
         const slots = [...c.times, ...Array(MAX_TIMES).fill("")].slice(0, MAX_TIMES);
-        cards += `<div class=card>${banner}<form method=post action=/api/settings><input type=hidden name=ch value=${id}><p>${c.handle ? "@" + esc(c.handle) : ""}</p><p><label>Name <input name=label value="${esc(c.label)}"></label></p><p><label>Niche <select name=niche>${Object.entries(NICHES).map(([k, v]) => `<option value=${k} ${k === c.niche ? "selected" : ""}>${esc(v)}</option>`).join("")}</select></label></p><p><label>Time zone <select name=tz>${ZONES.map((z) => `<option ${z === c.tz ? "selected" : ""}>${z}</option>`).join("")}</select></label></p><p>Post at (any time you like, up to ${MAX_TIMES} per day, leave blank to skip):<br>${slots.map((t) => `<input type=time name=time value="${esc(t)}">`).join(" ")}</p><p><label><input type=checkbox name=active ${c.active ? "checked" : ""}> Posting on</label></p><button>Save</button></form><form method=post action=/api/delete onsubmit="return confirm('Remove this channel?')"><input type=hidden name=ch value=${id}><button style="background:#ffffff22;color:#fff8e1;margin-top:8px">Remove channel</button></form><b>Recent posts</b>${log.length ? log.slice(0, 8).map((l) => `<p>${esc(l.at.slice(0, 16))} ${l.ok ? `<a style=color:#d4af5a href="${esc(l.url)}">${esc(l.title)}</a>` : "failed: " + esc(l.err)}</p>`).join("") : "<p>Nothing posted yet.</p>"}</div>`;
+        cards += `<div class=card>${banner}<form method=post action=/api/settings><input type=hidden name=ch value=${id}><p>${c.handle ? "@" + esc(c.handle) : ""}</p><p><label>Name <input name=label value="${esc(c.label)}"></label></p><p><label>Niche <select name=niche>${Object.entries(NICHES).map(([k, v]) => `<option value=${k} ${k === c.niche ? "selected" : ""}>${esc(v)}</option>`).join("")}</select></label></p><p><label>Time zone <select name=tz>${ZONES.map((z) => `<option ${z === c.tz ? "selected" : ""}>${z}</option>`).join("")}</select></label></p><p>Post at (any time you like, up to ${MAX_TIMES} per day, leave blank to skip):<br>${slots.map((t) => `<input type=time name=time value="${esc(t)}">`).join(" ")}</p><p><label><input type=checkbox name=active ${c.active ? "checked" : ""}> Posting on</label></p><button>Save</button></form><form method=post action=/api/delete onsubmit="return confirm('Remove this channel?')"><input type=hidden name=ch value=${id}><button style="background:#e5e7eb;color:#1f2933;margin-top:8px">Remove channel</button></form><b>Recent posts</b>${log.length ? log.slice(0, 8).map((l) => `<p>${esc(l.at.slice(0, 16))} ${l.ok ? `<a style=color:#15803d href="${esc(l.url)}">${esc(l.title)}</a>` : "failed: " + esc(l.err)}</p>`).join("") : "<p>Nothing posted yet.</p>"}</div>`;
       }
-      return page(`<h1>Your channels</h1><p>${esc(o.email)} <a href=/auth/logout style=color:#d4af5a>sign out</a></p>${cards || "<p>No channels yet.</p>"}<form action=/auth/login class=card><input type=hidden name=mode value=add><p><label>Add another channel: paste its link or @handle<br><input name=target placeholder="https://youtube.com/@otherchannel" style="width:100%;padding:10px;border-radius:8px;border:0;margin-top:6px"></label></p><button>+ Add channel</button><p style="opacity:.7;font-size:.9rem">On the Google screen choose the account that owns that channel.</p></form>`);
+      return page(`<h1>Your channels</h1><p>${esc(o.email)} <a href=/auth/logout style=color:#15803d>sign out</a></p>${cards || "<p>No channels yet.</p>"}<form action=/auth/login class=card><input type=hidden name=mode value=add><p><label>Add another channel: paste its link or @handle<br><input name=target placeholder="https://youtube.com/@otherchannel" style="width:100%;padding:10px;border-radius:8px;border:0;margin-top:6px"></label></p><button>+ Add channel</button><p style="color:#64748b;font-size:.9rem">On the Google screen choose the account that owns that channel.</p></form>`);
     }
     if (p === "/api/due" || p === "/api/log") { // runner only
       if (req.headers.get("authorization") !== "Bearer " + env.RUNNER_TOKEN) return new Response("no", { status: 401 });
@@ -99,5 +99,57 @@ export default {
       log.unshift({ at: new Date().toISOString(), ok, url: v, title, err }); await put(env, lk, log.slice(0, 50)); return Response.json({ ok: true });
     }
     return new Response("not found", { status: 404 });
+  },
+};
+
+const AR = [
+["Daily Shorts on autopilot","شورتس يومية على الطيار الآلي"],
+["Connect your YouTube channels. Pick a niche and your own posting times for each one. A fresh Short is made and posted for you automatically.","اربط قنوات يوتيوب بتاعتك. اختار المجال ومواعيد النشر لكل قناة. بنعمل شورت جديد وننشره لك أوتوماتيك."],
+["Your channel link or @handle","رابط قناتك أو @اسم القناة"],
+["Connect YouTube channel","اربط قناة يوتيوب"],
+["We check that the Google account you pick really owns that channel.","بنتأكد إن حساب جوجل اللي هتختاره هو فعلاً صاحب القناة."],
+["Permission asked: upload videos only. You can revoke it any time in your Google account.","الصلاحية المطلوبة: رفع الفيديوهات فقط. تقدر تلغيها في أي وقت من حساب جوجل."],
+["Login expired.","انتهت جلسة الدخول."],["Try again","حاول تاني"],
+["Google did not grant upload access.","جوجل ما أعطتش صلاحية الرفع."],
+["That Google account has no YouTube channel (or channel access was not granted).","حساب جوجل ده مالوش قناة يوتيوب (أو ما اتعطتش صلاحية القناة)."],
+["You pasted","انت لصقت"],[", but the Google account you picked owns ","، لكن حساب جوجل اللي اخترته بيملك "],["Nothing was connected.","ما اتربطش أي شيء."],
+["Your channels","قنواتك"],["sign out","تسجيل خروج"],["No channels yet.","لا توجد قنوات بعد."],
+["Add another channel: paste its link or @handle","أضف قناة تانية: الصق رابطها أو @اسمها"],["+ Add channel","+ إضافة قناة"],
+["On the Google screen choose the account that owns that channel.","في شاشة جوجل اختار الحساب اللي بيملك القناة دي."],
+["Reconnect required.","لازم إعادة الربط."],["Google ended the permission, so posting is paused (nothing fails silently).","جوجل أنهت الصلاحية فالنشر متوقف (مفيش حاجة بتفشل في الخفاء)."],
+["Reconnect channel","إعادة ربط القناة"],["Reconnect now","أعد الربط الآن"],["to keep posting.","عشان النشر يكمل."],
+["Pilot mode: Google ends this permission about ","وضع التجربة: جوجل بتنهي الصلاحية حوالي "],["Pilot mode: reconnect by ","وضع التجربة: أعد الربط قبل "],["Connected ","تم الربط "],
+["Name ","الاسم "],["Niche ","المجال "],["Time zone ","المنطقة الزمنية "],
+["Post at (any time you like, up to ","وقت النشر (أي وقت تحبه، حتى "],[" per day, leave blank to skip):"," في اليوم، اتركه فاضي للتخطي):"],
+["Posting on","النشر شغال"],["Save","حفظ"],["Remove channel","حذف القناة"],["Remove this channel?","حذف القناة دي؟"],
+["Recent posts","آخر المنشورات"],["Nothing posted yet.","لم يتم النشر بعد."],["failed: ","فشل: "],
+["Quran & Adhkar","القرآن والأذكار"],["Daily Motivation","تحفيز يومي"],["Stoic Wisdom","حكمة الرواقيين"],["Amazing Facts","حقائق مذهلة"],["Healthy Habits","عادات صحية"],["Money Mindset","عقلية المال"],
+["https://youtube.com/@yourchannel","https://youtube.com/@قناتك"],
+];
+AR.sort((a, b) => b[0].length - a[0].length);
+const DARK = "body{background:#0f172a!important;color:#e2e8f0!important}.card{background:#1e293b!important;border-color:#334155!important}input,select{background:#0f172a!important;color:#e2e8f0!important;border-color:#475569!important}footer a{color:#cbd5e1!important}";
+export default {
+  async fetch(req, env) {
+    const u = new URL(req.url), ck = req.headers.get("cookie") || "";
+    if (u.pathname === "/set") {
+      let back = u.searchParams.get("back") || "/"; if (!/^\/[^\/\\]*$/.test(back)) back = "/";
+      const h = new Headers({ location: back }), o = "; Path=/; Max-Age=31536000; Secure; SameSite=Lax";
+      const l = u.searchParams.get("lang"), t = u.searchParams.get("theme");
+      if (l === "ar" || l === "en") h.append("set-cookie", "lang=" + l + o);
+      if (t === "dark" || t === "light") h.append("set-cookie", "theme=" + t + o);
+      return new Response(null, { status: 302, headers: h });
+    }
+    const r = await inner.fetch(req, env);
+    if (!(r.headers.get("content-type") || "").includes("text/html")) return r;
+    const ar = /(?:^|;\s*)lang=ar/.test(ck), dark = /(?:^|;\s*)theme=dark/.test(ck);
+    let html = await r.text();
+    if (ar) { for (const [a, b] of AR) html = html.split(a).join(b); html = html.replace("<!doctype html>", "<!doctype html><html lang=ar dir=rtl>").replace("<title>Auto Shorts</title>", "<title>شورتس أوتوماتيك</title>"); }
+    if (dark) html = html.replace("</style>", DARK + "</style>");
+    const back = encodeURIComponent(u.pathname);
+    const foot = `<footer style="text-align:center;margin:24px 0;font-size:.9rem;color:#64748b"><a style=color:#64748b href="/set?lang=${ar ? "en" : "ar"}&back=${back}">${ar ? "English" : "العربية"}</a> &middot; <a style=color:#64748b href="/set?theme=${dark ? "light" : "dark"}&back=${back}">${ar ? (dark ? "فاتح" : "داكن") : (dark ? "Light" : "Dark")}</a></footer>`;
+    html = html.replace("</main>", foot + "</main>");
+    if (!html.includes(foot)) html += foot;
+    const h = new Headers(r.headers); h.delete("content-length");
+    return new Response(html, { status: r.status, headers: h });
   },
 };

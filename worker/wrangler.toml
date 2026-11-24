@@ -1,6 +1,6 @@
-name = "auto-shorts"
+name = "shorts-autopilot"
 main = "index.js"
 compatibility_date = "2026-11-01"
 [[kv_namespaces]]
 binding = "DB"
-id = "FILL_AFTER_wrangler_kv_namespace_create"
+id = "04f79d4edadb4cc39d0b3d56e35805ef"

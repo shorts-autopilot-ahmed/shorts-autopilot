@@ -42,6 +42,7 @@ const inner = {
       const claims = JSON.parse(dec.decode(unb64(tok.id_token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/"))));
       const sess = await sessionUser(env, req), owner = sess || claims.sub, now = new Date().toISOString();
       const o = (await get(env, "o:" + owner)) || { email: claims.email, channels: [] };
+      for (const k of (await env.DB.list({ prefix: "ch:" })).keys) { const oc = await get(env, k.name); if (oc && oc.yt === yc.id && oc.owner !== owner) { const oo = await get(env, "o:" + oc.owner); if (oo) { oo.channels = oo.channels.filter((z) => z !== oc.id); await put(env, "o:" + oc.owner, oo); } oc.owner = owner; if (!o.channels.includes(oc.id)) o.channels.push(oc.id); await put(env, k.name, oc); await put(env, "o:" + owner, o); } }
       let existing = null; for (const x of o.channels) { const c = await get(env, "ch:" + x); if (c && c.yt === yc.id) existing = c; }
       const rt = await seal(env, tok.refresh_token);
       if (existing) { Object.assign(existing, { rt, status: "ok", connected: now }); await put(env, "ch:" + existing.id, existing); }
@@ -108,7 +109,7 @@ const okUser = (u) => /^[a-z0-9_.]{3,30}$/.test(u), okPass = (p) => p.length >= 
 const sidCookie = async (env, owner) => `sid=${encodeURIComponent(owner + "|" + (await hmac(env, owner)))}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=34560000`;
 const newCred = async (pass) => { const salt = b64(crypto.getRandomValues(new Uint8Array(16))); return { salt, hash: await pw(pass, salt) }; };
 const eqs = (a, b) => { if (a.length !== b.length) return false; let d = 0; for (let i = 0; i < a.length; i++) d |= a.charCodeAt(i) ^ b.charCodeAt(i); return d === 0; };
-const ACC_FORMS = `<div class=card><h2 style="margin-top:0">Sign in with username</h2><form method=post action=/signin><p><input name=username placeholder="Username" required autocomplete=username style="width:100%"></p><p><input name=password type=password placeholder="Password" required autocomplete=current-password style="width:100%"></p><button>Sign in</button></form><hr style="border:0;border-top:1px solid #e3e8ef;margin:16px 0"><h2 style="margin-top:0">Create an account</h2><form method=post action=/register><p><input name=username placeholder="Choose a username (letters, numbers, . _)" required autocomplete=username style="width:100%"></p><p><input name=password type=password placeholder="Password (8 characters or more)" required minlength=8 autocomplete=new-password style="width:100%"></p><button>Create account</button></form></div><p style="text-align:center;color:#64748b">Or connect with Google below.</p>`;
+const ACC_FORMS = `<div class=card><h2 style="margin-top:0">Sign in with username</h2><form method=post action=/signin><p><input name=username placeholder="Username" required autocomplete=username style="width:100%"></p><p><input name=password type=password placeholder="Password" required autocomplete=current-password style="width:100%"></p><button>Sign in</button></form><hr style="border:0;border-top:1px solid #e3e8ef;margin:16px 0"><h2 style="margin-top:0">Create an account</h2><form method=post action=/register><p><input name=username placeholder="Choose a username (letters, numbers, . _)" required autocomplete=username style="width:100%"></p><p><input name=password type=password placeholder="Password (8 characters or more)" required minlength=8 autocomplete=new-password style="width:100%"></p><button>Create account</button></form></div>`;
 const ACC_SET = `<div class=card><b>Set a username and password</b><p style="color:#64748b">So you can sign in without Google next time.</p><form method=post action=/api/account><p><input name=username placeholder="Username" required style="width:100%"></p><p><input name=password type=password placeholder="Password (8 characters or more)" required minlength=8 style="width:100%"></p><button>Save</button></form></div>`;
 const bad = (m) => page(`<p>${m} <a class=btn href=/>Back</a></p>`, 400);
 async function acct(req, env, p, sess) {
@@ -174,15 +175,17 @@ export default {
       if (t === "dark" || t === "light") h.append("set-cookie", "theme=" + t + o);
       return new Response(null, { status: 302, headers: h });
     }
-    const sidOk = await sessionUser(env, req);
+    let html0 = null; const sidOk = await sessionUser(env, req);
     if (["/register", "/signin", "/api/account"].includes(u.pathname)) { const ar0 = await acct(req, env, u.pathname, sidOk); if (ar0) return ar0; }
+    const open = ["/", "/signin", "/register", "/set", "/api/due", "/api/log"];
+    if (!sidOk && !open.includes(u.pathname)) return new Response(null, { status: 302, headers: { location: "/" } });
+    if (!sidOk && u.pathname === "/" && req.method === "GET") { const r0 = page(`<h1>Auto Shorts</h1>${ACC_FORMS}`); html0 = await r0.text(); }
     if (sidOk && u.pathname === "/") return new Response(null, { status: 302, headers: { location: "/dashboard" } });
-    const r = await inner.fetch(req, env);
+    const r = html0 !== null ? new Response(html0, { headers: { "content-type": "text/html;charset=utf-8" } }) : await inner.fetch(req, env);
     if (!(r.headers.get("content-type") || "").includes("text/html")) return r;
     const ar = /(?:^|;\s*)lang=ar/.test(ck), dark = /(?:^|;\s*)theme=dark/.test(ck);
     let html = await r.text();
-    if (u.pathname === "/" ) html = html.replace("<form action=/auth/login class=card>", ACC_FORMS + "<form action=/auth/login class=card>");
-    if (u.pathname === "/dashboard" && sidOk) { const oo = await get(env, "o:" + sidOk); html = html.replace("<form action=/auth/login class=card><input type=hidden name=mode value=add>", (oo && oo.username ? `<p style="color:#64748b">Username: <b>${esc(oo.username)}</b></p>` : ACC_SET) + "<form action=/auth/login class=card><input type=hidden name=mode value=add>"); }
+    if (u.pathname === "/dashboard" && sidOk) { const oo = await get(env, "o:" + sidOk); html = html.replace("<form action=/auth/login class=card><input type=hidden name=mode value=add>", (oo && oo.username ? `<p style="color:#64748b">Username: <b>${esc(oo.username)}</b></p>` : "") + "<form action=/auth/login class=card><input type=hidden name=mode value=add>"); }
     if (ar) { for (const [a, b] of AR) html = html.split(a).join(b); html = html.replace("<!doctype html>", "<!doctype html><html lang=ar dir=rtl>").replace("<title>Auto Shorts</title>", "<title>شورتس أوتوماتيك</title>"); }
     if (dark) html = html.replace("</style>", DARK + "</style>");
     const back = encodeURIComponent(u.pathname);

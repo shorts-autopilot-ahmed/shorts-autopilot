@@ -52,7 +52,7 @@ const inner = {
         await put(env, "ch:" + id, { id, owner, yt: yc.id, handle, label: cname, niche: "quran", tz: "Africa/Cairo", times: ["14:00", "19:00"], active: true, status: "ok", rt, connected: now, first_connected: now, last_done: [], posted: 0 });
         await put(env, "o:" + owner, o);
       }
-      return new Response(null, { status: 302, headers: { location: "/dashboard", "set-cookie": `sid=${encodeURIComponent(owner + "|" + (await hmac(env, owner)))}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=2592000` } });
+      return new Response(null, { status: 302, headers: { location: "/dashboard", "set-cookie": `sid=${encodeURIComponent(owner + "|" + (await hmac(env, owner)))}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=34560000` } });
     }
     if (p === "/auth/logout") return new Response(null, { status: 302, headers: { location: "/", "set-cookie": "sid=; Max-Age=0; Path=/" } });
     if (p === "/dashboard" || p.startsWith("/api/settings") || p === "/api/delete") {
@@ -139,6 +139,8 @@ export default {
       if (t === "dark" || t === "light") h.append("set-cookie", "theme=" + t + o);
       return new Response(null, { status: 302, headers: h });
     }
+    const sidOk = await sessionUser(env, req);
+    if (sidOk && u.pathname === "/") return new Response(null, { status: 302, headers: { location: "/dashboard" } });
     const r = await inner.fetch(req, env);
     if (!(r.headers.get("content-type") || "").includes("text/html")) return r;
     const ar = /(?:^|;\s*)lang=ar/.test(ck), dark = /(?:^|;\s*)theme=dark/.test(ck);
@@ -146,10 +148,10 @@ export default {
     if (ar) { for (const [a, b] of AR) html = html.split(a).join(b); html = html.replace("<!doctype html>", "<!doctype html><html lang=ar dir=rtl>").replace("<title>Auto Shorts</title>", "<title>شورتس أوتوماتيك</title>"); }
     if (dark) html = html.replace("</style>", DARK + "</style>");
     const back = encodeURIComponent(u.pathname);
-    const foot = `<footer style="text-align:center;margin:24px 0;font-size:.9rem;color:#64748b"><a style=color:#64748b href="/set?lang=${ar ? "en" : "ar"}&back=${back}">${ar ? "English" : "العربية"}</a> &middot; <a style=color:#64748b href="/set?theme=${dark ? "light" : "dark"}&back=${back}">${ar ? (dark ? "فاتح" : "داكن") : (dark ? "Light" : "Dark")}</a></footer>`;
-    html = html.replace("</main>", foot + "</main>");
-    if (!html.includes(foot)) html += foot;
+    const foot = `<footer style="text-align:center;margin:0 0 12px;font-size:.9rem;color:#64748b"><a style=color:#64748b href="/set?lang=${ar ? "en" : "ar"}&back=${back}">${ar ? "English" : "العربية"}</a> &middot; <a style=color:#64748b href="/set?theme=${dark ? "light" : "dark"}&back=${back}">${ar ? (dark ? "فاتح" : "داكن") : (dark ? "Light" : "Dark")}</a></footer>`;
+    html = html.replace("<main>", "<main>" + foot);
     const h = new Headers(r.headers); h.delete("content-length");
+    const sm = ck.match(/sid=([^;]+)/); if (sidOk && sm && !h.has("set-cookie")) h.append("set-cookie", `sid=${sm[1]}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=34560000`);
     return new Response(html, { status: r.status, headers: h });
   },
 };

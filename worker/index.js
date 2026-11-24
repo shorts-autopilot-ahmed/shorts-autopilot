@@ -186,8 +186,9 @@ export default {
     if (ar) { for (const [a, b] of AR) html = html.split(a).join(b); html = html.replace("<!doctype html>", "<!doctype html><html lang=ar dir=rtl>").replace("<title>Auto Shorts</title>", "<title>شورتس أوتوماتيك</title>"); }
     if (dark) html = html.replace("</style>", DARK + "</style>");
     const back = encodeURIComponent(u.pathname);
-    const foot = `<footer style="text-align:center;margin:0 0 12px;font-size:.9rem;color:#64748b"><a style=color:#64748b href="/set?lang=${ar ? "en" : "ar"}&back=${back}">${ar ? "English" : "العربية"}</a> &middot; <a style=color:#64748b href="/set?theme=${dark ? "light" : "dark"}&back=${back}">${ar ? (dark ? "فاتح" : "داكن") : (dark ? "Light" : "Dark")}</a></footer>`;
-    html = html.replace("<main>", "<main>" + foot);
+    const ic = "width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round", globe = `<svg viewBox="0 0 24 24" style="${ic}"><circle cx=12 cy=12 r=10 /><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></svg>`, moon = `<svg viewBox="0 0 24 24" style="${ic}"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>`, sun = `<svg viewBox="0 0 24 24" style="${ic}"><circle cx=12 cy=12 r=4 /><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>`, ib = "display:inline-flex;padding:8px;border-radius:999px;color:#64748b;text-decoration:none;margin:0 6px";
+    const foot = `<footer style="text-align:center;margin:20px 0 0"><a style="${ib}" title="${ar ? "English" : "العربية"}" aria-label="language" href="/set?lang=${ar ? "en" : "ar"}&back=${back}">${globe}</a><a style="${ib}" title="${dark ? "Light" : "Dark"}" aria-label="theme" href="/set?theme=${dark ? "light" : "dark"}&back=${back}">${dark ? sun : moon}</a></footer>`;
+    html = html.replace("</main>", foot + "</main>");
     const h = new Headers(r.headers); h.delete("content-length");
     const sm = ck.match(/sid=([^;]+)/); if (sidOk && sm && !h.has("set-cookie")) h.append("set-cookie", `sid=${sm[1]}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=34560000`);
     return new Response(html, { status: r.status, headers: h });

@@ -149,7 +149,7 @@ const AR = [
 ["That Google account has no YouTube channel (or channel access was not granted).","حساب جوجل ده مالوش قناة يوتيوب (أو ما اتعطتش صلاحية القناة)."],
 ["You pasted","انت لصقت"],[", but the Google account you picked owns ","، لكن حساب جوجل اللي اخترته بيملك "],["Nothing was connected.","ما اتربطش أي شيء."],
 ["Sign in with username","الدخول باسم المستخدم"],["Create an account","إنشاء حساب"],["Create account","إنشاء حساب"],["Sign in","دخول"],["Username (letters, numbers, . _)","اسم المستخدم"],["Choose a username (letters, numbers, . _)","اختر اسم مستخدم (حروف وأرقام . _)"],["Password (8 characters or more)","كلمة السر (٨ أحرف أو أكثر)"],["Username: ","اسم المستخدم: "],["Username","اسم المستخدم"],["Password","كلمة السر"],["Or connect with Google below.","أو اربط عن طريق جوجل بالأسفل."],["Set a username and password","حدد اسم مستخدم وكلمة سر"],["So you can sign in without Google next time.","عشان تدخل من غير جوجل المرة الجاية."],["Wrong username or password.","اسم المستخدم أو كلمة السر غلط."],["That username is taken.","اسم المستخدم ده مستخدم."],["Too many wrong attempts. Wait 15 minutes.","محاولات خاطئة كتير. استنى ١٥ دقيقة."],["Back","رجوع"],["Username must be 3 to 30 letters, numbers, dots or underscores, and the password at least 8 characters.","اسم المستخدم ٣ إلى ٣٠ حرف أو رقم أو . _ وكلمة السر ٨ أحرف على الأقل."],["Account already has a username.","الحساب ليه اسم مستخدم بالفعل."],
-["Your channels","قنواتك"],["sign out","تسجيل خروج"],["No channels yet.","لا توجد قنوات بعد."],
+["Enter the site password","اكتب باسورد الموقع"],["Unlock","فتح"],["Wrong password.","الباسورد غلط."],["Your channels","قنواتك"],["sign out","تسجيل خروج"],["No channels yet.","لا توجد قنوات بعد."],
 ["Add another channel: paste its link or @handle","أضف قناة تانية: الصق رابطها أو @اسمها"],["+ Add channel","+ إضافة قناة"],
 ["On the Google screen choose the account that owns that channel.","في شاشة جوجل اختار الحساب اللي بيملك القناة دي."],
 ["Reconnect required.","لازم إعادة الربط."],["Google ended the permission, so posting is paused (nothing fails silently).","جوجل أنهت الصلاحية فالنشر متوقف (مفيش حاجة بتفشل في الخفاء)."],
@@ -164,6 +164,15 @@ const AR = [
 ];
 AR.sort((a, b) => b[0].length - a[0].length);
 const DARK = ".brand,a:not(.btn){color:#4ade80!important}hr{border-color:#334155!important}input[type=time]{color-scheme:dark}body{background:radial-gradient(circle at 15% 5%,#14532d99 0,transparent 40%),radial-gradient(circle at 90% 20%,#1e3a8a88 0,transparent 38%),radial-gradient(circle at 50% 105%,#065f4688 0,transparent 45%),linear-gradient(180deg,#0b1220,#0f172a) fixed!important;color:#e2e8f0!important}.card{background:#1e293bf0!important;border-color:#334155!important}input,select{background:#0f172a!important;color:#e2e8f0!important;border-color:#475569!important}footer a{color:#cbd5e1!important}";
+function applyUi(html, u, ar, dark) {
+  if (ar) { for (const [a, b] of AR) html = html.split(a).join(b); html = html.replace("<!doctype html>", "<!doctype html><html lang=ar dir=rtl>").replace("<title>ShortsForge</title>", "<title>ShortsForge</title>"); }
+  if (dark) html = html.replace("</style>", DARK + "</style>");
+  const back = encodeURIComponent(u.pathname);
+  const ic = "width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round", globe = `<svg viewBox="0 0 24 24" style="${ic}"><circle cx=12 cy=12 r=10 /><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></svg>`, moon = `<svg viewBox="0 0 24 24" style="${ic}"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>`, sun = `<svg viewBox="0 0 24 24" style="${ic}"><circle cx=12 cy=12 r=4 /><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>`, ib = "display:inline-flex;padding:8px;border-radius:999px;color:#64748b;text-decoration:none;margin:0 6px";
+  const foot = `<footer style="text-align:center;margin:20px 0 0"><a style="${ib}" title="${ar ? "English" : "العربية"}" aria-label="language" href="/set?lang=${ar ? "en" : "ar"}&back=${back}">${globe}</a><a style="${ib}" title="${dark ? "Light" : "Dark"}" aria-label="theme" href="/set?theme=${dark ? "light" : "dark"}&back=${back}">${dark ? sun : moon}</a></footer>`;
+  html = html.replace("</main>", foot + "</main>");
+  return html;
+}
 export default {
   async fetch(req, env) {
     const u = new URL(req.url), ck = req.headers.get("cookie") || "";
@@ -174,6 +183,25 @@ export default {
       if (l === "ar" || l === "en") h.append("set-cookie", "lang=" + l + o);
       if (t === "dark" || t === "light") h.append("set-cookie", "theme=" + t + o);
       return new Response(null, { status: 302, headers: h });
+    }
+    if (env.GATE_PASSWORD && !["/api/due", "/api/log", "/set"].includes(u.pathname)) {
+      const gv = await hmac(env, "gate|" + env.GATE_PASSWORD), gm = ck.match(/(?:^|;\s*)gate=([^;]+)/);
+      if (!(gm && eqs(decodeURIComponent(gm[1]), gv))) {
+        let msg = "";
+        if (req.method === "POST" && u.pathname === "/gate") {
+          const ip = req.headers.get("cf-connecting-ip") || "x", tk = "g:" + ip, fl = (await get(env, tk)) || { n: 0, t: 0 }, fresh = Date.now() - fl.t < 900000;
+          if (fl.n >= 5 && fresh) msg = "Too many wrong attempts. Wait 15 minutes.";
+          else {
+            const pass = String((await req.formData()).get("password") || "");
+            if (eqs(await hmac(env, "p|" + pass), await hmac(env, "p|" + env.GATE_PASSWORD))) return new Response(null, { status: 303, headers: { location: "/", "set-cookie": `gate=${encodeURIComponent(gv)}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=34560000` } });
+            await put(env, tk, { n: (fresh ? fl.n : 0) + 1, t: Date.now() }); msg = "Wrong password.";
+          }
+        }
+        const ar = /(?:^|;\s*)lang=ar/.test(ck), dark = /(?:^|;\s*)theme=dark/.test(ck);
+        let html = await page(`<div class=card><form method=post action=/gate><p style="margin-top:0"><b>Enter the site password</b></p>${msg ? `<p style="color:#dc2626">${msg}</p>` : ""}<p><input name=password type=password required autofocus autocomplete=current-password placeholder="Password"></p><button>Unlock</button></form></div>`, 401).text();
+        html = applyUi(html, u, ar, dark);
+        return new Response(html, { status: 401, headers: { "content-type": "text/html;charset=utf-8" } });
+      }
     }
     let html0 = null; const sidOk = await sessionUser(env, req);
     if (["/register", "/signin", "/api/account"].includes(u.pathname)) { const ar0 = await acct(req, env, u.pathname, sidOk); if (ar0) return ar0; }
@@ -186,12 +214,7 @@ export default {
     const ar = /(?:^|;\s*)lang=ar/.test(ck), dark = /(?:^|;\s*)theme=dark/.test(ck);
     let html = await r.text();
     if (u.pathname === "/dashboard" && sidOk) { const oo = await get(env, "o:" + sidOk); html = html.replace("<form action=/auth/login class=card><input type=hidden name=mode value=add>", (oo && oo.username ? `<p style="color:#64748b">Username: <b>${esc(oo.username)}</b></p>` : "") + "<form action=/auth/login class=card><input type=hidden name=mode value=add>"); }
-    if (ar) { for (const [a, b] of AR) html = html.split(a).join(b); html = html.replace("<!doctype html>", "<!doctype html><html lang=ar dir=rtl>").replace("<title>ShortsForge</title>", "<title>ShortsForge</title>"); }
-    if (dark) html = html.replace("</style>", DARK + "</style>");
-    const back = encodeURIComponent(u.pathname);
-    const ic = "width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round", globe = `<svg viewBox="0 0 24 24" style="${ic}"><circle cx=12 cy=12 r=10 /><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></svg>`, moon = `<svg viewBox="0 0 24 24" style="${ic}"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>`, sun = `<svg viewBox="0 0 24 24" style="${ic}"><circle cx=12 cy=12 r=4 /><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>`, ib = "display:inline-flex;padding:8px;border-radius:999px;color:#64748b;text-decoration:none;margin:0 6px";
-    const foot = `<footer style="text-align:center;margin:20px 0 0"><a style="${ib}" title="${ar ? "English" : "العربية"}" aria-label="language" href="/set?lang=${ar ? "en" : "ar"}&back=${back}">${globe}</a><a style="${ib}" title="${dark ? "Light" : "Dark"}" aria-label="theme" href="/set?theme=${dark ? "light" : "dark"}&back=${back}">${dark ? sun : moon}</a></footer>`;
-    html = html.replace("</main>", foot + "</main>");
+    html = applyUi(html, u, ar, dark);
     const h = new Headers(r.headers); h.delete("content-length");
     const sm = ck.match(/sid=([^;]+)/); if (sidOk && sm && !h.has("set-cookie")) h.append("set-cookie", `sid=${sm[1]}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=34560000`);
     return new Response(html, { status: r.status, headers: h });

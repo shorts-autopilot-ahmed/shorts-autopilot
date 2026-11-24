@@ -149,7 +149,7 @@ const AR = [
 ["That Google account has no YouTube channel (or channel access was not granted).","حساب جوجل ده مالوش قناة يوتيوب (أو ما اتعطتش صلاحية القناة)."],
 ["You pasted","انت لصقت"],[", but the Google account you picked owns ","، لكن حساب جوجل اللي اخترته بيملك "],["Nothing was connected.","ما اتربطش أي شيء."],
 ["Sign in with username","الدخول باسم المستخدم"],["Create an account","إنشاء حساب"],["Create account","إنشاء حساب"],["Sign in","دخول"],["Username (letters, numbers, . _)","اسم المستخدم"],["Choose a username (letters, numbers, . _)","اختر اسم مستخدم (حروف وأرقام . _)"],["Password (8 characters or more)","كلمة السر (٨ أحرف أو أكثر)"],["Username: ","اسم المستخدم: "],["Username","اسم المستخدم"],["Password","كلمة السر"],["Or connect with Google below.","أو اربط عن طريق جوجل بالأسفل."],["Set a username and password","حدد اسم مستخدم وكلمة سر"],["So you can sign in without Google next time.","عشان تدخل من غير جوجل المرة الجاية."],["Wrong username or password.","اسم المستخدم أو كلمة السر غلط."],["That username is taken.","اسم المستخدم ده مستخدم."],["Too many wrong attempts. Wait 15 minutes.","محاولات خاطئة كتير. استنى ١٥ دقيقة."],["Back","رجوع"],["Username must be 3 to 30 letters, numbers, dots or underscores, and the password at least 8 characters.","اسم المستخدم ٣ إلى ٣٠ حرف أو رقم أو . _ وكلمة السر ٨ أحرف على الأقل."],["Account already has a username.","الحساب ليه اسم مستخدم بالفعل."],
-["Enter the site password","اكتب باسورد الموقع"],["Unlock","فتح"],["Wrong password.","الباسورد غلط."],["Your channels","قنواتك"],["sign out","تسجيل خروج"],["No channels yet.","لا توجد قنوات بعد."],
+["Enter the password","ادخل الباسورد"],["Unlock","فتح"],["Wrong password.","الباسورد غلط."],["Your channels","قنواتك"],["sign out","تسجيل خروج"],["No channels yet.","لا توجد قنوات بعد."],
 ["Add another channel: paste its link or @handle","أضف قناة تانية: الصق رابطها أو @اسمها"],["+ Add channel","+ إضافة قناة"],
 ["On the Google screen choose the account that owns that channel.","في شاشة جوجل اختار الحساب اللي بيملك القناة دي."],
 ["Reconnect required.","لازم إعادة الربط."],["Google ended the permission, so posting is paused (nothing fails silently).","جوجل أنهت الصلاحية فالنشر متوقف (مفيش حاجة بتفشل في الخفاء)."],
@@ -185,7 +185,7 @@ export default {
       return new Response(null, { status: 302, headers: h });
     }
     if (env.GATE_PASSWORD && !["/api/due", "/api/log", "/set"].includes(u.pathname)) {
-      const gv = await hmac(env, "gate|" + env.GATE_PASSWORD), gm = ck.match(/(?:^|;\s*)gate=([^;]+)/);
+      const gv = await hmac(env, "gate2|" + env.GATE_PASSWORD), gm = ck.match(/(?:^|;\s*)gate=([^;]+)/);
       if (!(gm && eqs(decodeURIComponent(gm[1]), gv))) {
         let msg = "";
         if (req.method === "POST" && u.pathname === "/gate") {
@@ -193,12 +193,12 @@ export default {
           if (fl.n >= 5 && fresh) msg = "Too many wrong attempts. Wait 15 minutes.";
           else {
             const pass = String((await req.formData()).get("password") || "");
-            if (eqs(await hmac(env, "p|" + pass), await hmac(env, "p|" + env.GATE_PASSWORD))) return new Response(null, { status: 303, headers: { location: "/", "set-cookie": `gate=${encodeURIComponent(gv)}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=34560000` } });
+            if (eqs(await hmac(env, "p|" + pass), await hmac(env, "p|" + env.GATE_PASSWORD))) return new Response(null, { status: 303, headers: { location: "/", "set-cookie": `gate=${encodeURIComponent(gv)}; HttpOnly; Secure; SameSite=Lax; Path=/` } });
             await put(env, tk, { n: (fresh ? fl.n : 0) + 1, t: Date.now() }); msg = "Wrong password.";
           }
         }
         const ar = /(?:^|;\s*)lang=ar/.test(ck), dark = /(?:^|;\s*)theme=dark/.test(ck);
-        let html = await page(`<div class=card><form method=post action=/gate><p style="margin-top:0"><b>Enter the site password</b></p>${msg ? `<p style="color:#dc2626">${msg}</p>` : ""}<p><input name=password type=password required autofocus autocomplete=current-password placeholder="Password"></p><button>Unlock</button></form></div>`, 401).text();
+        let html = await page(`<div class=card><form method=post action=/gate><p style="margin-top:0"><b>Enter the password</b></p>${msg ? `<p style="color:#dc2626">${msg}</p>` : ""}<p><input name=password type=password required autofocus autocomplete=current-password placeholder="Password"></p><button>Unlock</button></form></div>`, 401).text();
         html = applyUi(html, u, ar, dark);
         return new Response(html, { status: 401, headers: { "content-type": "text/html;charset=utf-8" } });
       }

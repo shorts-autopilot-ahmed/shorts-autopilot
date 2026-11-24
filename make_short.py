@@ -35,7 +35,9 @@ def text_png(a, path):
     d.text((W/2, y+60), a["sub"], font=small, fill=(212,175,90,255), anchor="ma", **kw)
     img.save(path)
 
-def render(a, out, palette=0):
+NICHE_SOUND = {"quran": "bells", "hikma": "rain", "stoic": "drone", "motivation": "uplift", "money": "uplift", "facts": "bells", "health": "waves"}
+def render(a, out, palette=0, sound="auto"):
+    if sound not in ("drone","rain","waves","bells","uplift","none"): sound = NICHE_SOUND.get(a["_n"].get("id") or "", "bells")
     P = a["_n"]["palettes"]; c0, c1 = P[palette % len(P)]
     png = out + ".text.png"; text_png(a, png)
     # slow drifting gradient (gradients source with speed) + text fade in/out + 3-note drone pad
@@ -47,14 +49,20 @@ def render(a, out, palette=0):
     subprocess.run(["ffmpeg","-y","-loglevel","error","-filter_complex",fc.replace("[1:v]","[1:v]"),
         "-f","lavfi","-i","anullsrc=r=44100",  # placeholder removed below
         ], check=False) if False else None
-    cmd = ["ffmpeg","-y","-loglevel","error","-loop","1","-framerate","30","-t",str(DUR),"-i",png,
-           "-f","lavfi","-i",aud.split(",")[0].replace("aevalsrc=","aevalsrc=",1)]
-    # simpler: two filter graphs in one complex filter
+    bells = ("aevalsrc='0.16*sin(2*PI*523.25*t)*exp(-1.6*mod(t,3.2))+0.13*sin(2*PI*659.25*t)*exp(-1.6*mod(t+1.1,3.2))+0.11*sin(2*PI*783.99*t)*exp(-1.6*mod(t+2.1,3.2))+0.05*sin(2*PI*261.63*t)':s=44100:d=%d,aecho=0.8:0.8:700|1100:0.4|0.3,lowpass=f=3500" % DUR)
+    SND = {
+        "drone": ("aevalsrc='0.10*sin(2*PI*110*t)+0.07*sin(2*PI*164.81*t)+0.05*sin(2*PI*220*t)*(0.6+0.4*sin(2*PI*0.15*t))':s=44100:d=%d,lowpass=f=900,aecho=0.8:0.7:600:0.4" % DUR),
+        "rain": "anoisesrc=color=pink:r=44100:a=0.5:d=%d,highpass=f=500,lowpass=f=7000,volume=1.0" % DUR,
+        "waves": "anoisesrc=color=brown:r=44100:a=0.8:d=%d,lowpass=f=1000,tremolo=f=0.12:d=0.7,volume=1.2" % DUR,
+        "bells": bells,
+        "uplift": ("aevalsrc='0.10*sin(2*PI*261.63*t)+0.07*sin(2*PI*329.63*t)+0.06*sin(2*PI*392*t)+0.14*(sin(2*PI*523.25*t)*exp(-5*mod(t,2))+sin(2*PI*659.25*t)*exp(-5*mod(t+1.5,2))+sin(2*PI*783.99*t)*exp(-5*mod(t+1,2))+sin(2*PI*1046.5*t)*exp(-5*mod(t+0.5,2)))':s=44100:d=%d,aecho=0.8:0.6:400:0.3,lowpass=f=4000" % DUR),
+        "none": "anullsrc=r=44100:cl=stereo",
+    }
+    snd = SND.get(sound, SND["drone"])
     fc2 = (f"gradients=s={W}x{H}:c0={c0}:c1={c1}:x0=0:y0=0:x1={W}:y1={H}:speed=0.015:d={DUR}:r=30[bg];"
            f"[0:v]format=rgba,fade=t=in:st=1:d=2:alpha=1,fade=t=out:st={DUR-3}:d=2.5:alpha=1[tx];"
            f"[bg][tx]overlay=0:0,format=yuv420p[v];"
-           f"aevalsrc='0.10*sin(2*PI*110*t)+0.07*sin(2*PI*164.81*t)+0.05*sin(2*PI*220*t)*(0.6+0.4*sin(2*PI*0.15*t))':s=44100:d={DUR},"
-           f"lowpass=f=900,afade=t=in:d=3,afade=t=out:st={DUR-4}:d=4,aecho=0.8:0.7:600:0.4[a]")
+           f"{snd},atrim=0:{DUR},afade=t=in:d=3,afade=t=out:st={DUR-4}:d=4[a]")
     subprocess.run(["ffmpeg","-y","-loglevel","error","-loop","1","-framerate","30","-t",str(DUR),"-i",png,
         "-filter_complex",fc2,"-map","[v]","-map","[a]","-c:v","libx264","-preset","veryfast","-crf","22",
         "-c:a","aac","-b:a","128k","-t",str(DUR),"-movflags","+faststart",out], check=True)
@@ -68,4 +76,4 @@ if __name__ == "__main__":
     seq = int(sys.argv[1]) if len(sys.argv)>1 else 0
     out = sys.argv[2] if len(sys.argv)>2 else f"{HERE}/out/short.mp4"
     niche = sys.argv[3] if len(sys.argv)>3 else "quran"
-    a = pick(seq, niche=niche); render(a, out, seq); print(json.dumps(metadata(a), ensure_ascii=False))
+    a = pick(seq, niche=niche); render(a, out, seq, sys.argv[4] if len(sys.argv)>4 else "auto"); print(json.dumps(metadata(a), ensure_ascii=False))

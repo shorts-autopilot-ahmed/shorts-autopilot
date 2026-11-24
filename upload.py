@@ -38,7 +38,7 @@ if __name__ == "__main__":
     for ch in channels:   # each channel: {"name","refresh_token","niche"}
         try:
             salt = int(hashlib.sha1(ch["name"].encode()).hexdigest()[:6], 16); seq = int(ch.get("seq", 0)); a = make_short.pick(seq, niche=ch.get("niche", "quran"), salt=salt); meta = make_short.metadata(a)
-            out = f"{HERE}/out/{ch['name']}.mp4"; make_short.render(a, out, seq)
+            out = f"{HERE}/out/{ch['name']}.mp4"; make_short.render(a, out, seq, ch.get("sound", "drone"))
             try:
                 tok = access_token(ch["refresh_token"])
             except urllib.error.HTTPError as e:
